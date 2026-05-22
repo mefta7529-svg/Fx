@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>𝐙 𝐈 𝐍</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0; padding: 0; box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --bg-deep: #05121e;
+      --bg-mid: #0a1a2a;
+      --bg-light: #1a3b5d;
+      --glass: rgba(255,255,255,0.12);
+      --glass-border: rgba(255,255,255,0.22);
+      --glass-hover: rgba(255,255,255,0.2);
+      --white: #ffffff;
+      --white-soft: rgba(255,255,255,0.85);
+      --white-dim: rgba(255,255,255,0.55);
+      --blue: rgba(37,99,235,0.75);
+      --green: rgba(16,185,129,0.75);
+      --red: #D41A1A;
+      --red-bg: rgba(232,0,0,0.09);
+      --radius-card: 44px;
+      --radius-input: 26px;
+      --radius-btn: 26px;
+      --shadow-card: 0 24px 48px rgba(0,0,0,0.3), inset 0 0 0 0.5px rgba(255,255,255,0.08);
+      --font: 'Poppins', system-ui, sans-serif;
+      --transition: 0.28s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    body {
+      background: radial-gradient(ellipse at 20% 30%, var(--bg-light), var(--bg-mid) 50%, var(--bg-deep));
+      min-height: 100vh;
+      font-family: var(--font);
+      overflow: hidden;
+      touch-action: pan-y;
+    }
+
+    /* ── Overlays ── */
+    .overlay {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 9999;
+    }
+
+    /* Initial loading */
+    #initialLoadingOverlay {
+      background: radial-gradient(ellipse at 20% 30%, var(--bg-light), var(--bg-mid) 50%, var(--bg-deep));
+      transition: opacity 0.45s ease;
+    }
+    #initialLoadingOverlay.hide { opacity: 0; pointer-events: none; }
+
+    /* Process overlay */
+    #processOverlay {
+      background: radial-gradient(ellipse at 20% 30%, var(--bg-light), var(--bg-mid) 50%, var(--bg-deep));
+      display: none;
+    }
+    #processOverlay.show { display: flex; }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      transform: rotateZ(45deg);
+      perspective: 1000px;
+      color: rgba(255,255,255,0.85);
+      position: relative;
+    }
+    .spinner::before, .spinner::after {
+      content: ''; display: block; position: absolute; inset: 0;
+      border-radius: 50%;
+    }
+    .spinner::before {
+      transform: rotateX(70deg);
+      animation: spin 1s linear infinite;
+    }
+    .spinner::after {
+      transform: rotateY(70deg);
+      animation: spin 1s linear infinite 0.4s;
+    }
+    @keyframes spin {
+      0%,100%  { box-shadow:  .2em  0    0 0 currentColor }
+      12%      { box-shadow:  .2em  .2em 0 0 currentColor }
+      25%      { box-shadow:  0     .2em 0 0 currentColor }
+      37%      { box-shadow: -.2em  .2em 0 0 currentColor }
+      50%      { box-shadow: -.2em  0    0 0 currentColor }
+      62%      { box-shadow: -.2em -.2em 0 0 currentColor }
+      75%      { box-shadow:  0    -.2em 0 0 currentColor }
+      87%      { box-shadow:  .2em -.2em 0 0 currentColor }
+    }
+
+    .loading-label {
+      color: var(--white-soft);
+      font-size: 15px; font-weight: 600;
+      margin-top: 18px; letter-spacing: 0.3px;
+    }
+
+    /* ── Main content ── */
+    #mainContent {
+      position: fixed; inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 1.2rem;
+    }
+    #mainContent.visible { display: flex; }
+
+    /* Logo */
+    .logo-wrap {
+      margin-bottom: -10px;
+      margin-right: 180px;
+      animation: fadeUp 0.55s ease both;
+    }
+    .logo-wrap img {
+      width: 110px; height: auto;
+      border-radius: 28px;
+      filter: drop-shadow(0 10px 22px rgba(0,0,0,0.4));
+      transition: transform 0.2s ease;
+    }
+    .logo-wrap img:active { transform: scale(0.96); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card */
+    .card {
+      background: linear-gradient(to right, #020202, #262626);
+      backdrop-filter: blur(18px);
+      border-radius: var(--radius-card);
+      box-shadow: inset 0px 0px 0px #fff;
+      padding: 30px 24px 26px;
+      width: 90%; max-width: 380px;
+      text-align: center;
+      animation: popIn 0.45s cubic-bezier(0.2,0.9,0.4,1.1) both;
+      position: relative; overflow: hidden;
+    }
+    .card::after {
+      content: '';
+      position: absolute; top: 0; left: -80%;
+      width: 50%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent);
+      transform: skewX(-15deg);
+      pointer-events: none;
+      animation: sheen 4s ease 0.8s infinite;
+    }
+    @keyframes sheen {
+      0%   { left: -80%; }
+      40%  { left: 130%; }
+      100% { left: 130%; }
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    .card h2 {
+      font-size: 1.85rem; font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.5px;
+      margin-bottom: 22px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+
+    /* Inputs */
+    .card input {
+      width: 100%;
+      padding: 14px 20px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: var(--radius-input);
+      color: var(--white);
+      font-size: 15px; font-weight: 500;
+      font-family: var(--font);
+      outline: none;
+      margin-bottom: 12px;
+      transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+    }
+    .card input::placeholder { color: var(--white-dim); font-weight: 400; }
+    .card input:focus {
+      background: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.5);
+      box-shadow: 0 0 16px rgba(255,255,255,0.1);
+    }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: 0.5px solid rgba(255,255,255,0.3);
+      border-radius: var(--radius-btn);
+      font-size: 16px; font-weight: 700;
+      font-family: var(--font);
+      color: var(--white);
+      cursor: pointer;
+      margin-top: 6px;
+      letter-spacing: 0.6px;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-blue  { background: var(--blue);  }
+    .btn-green { background: var(--green); }
+    .btn-ghost { background: var(--glass); }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+    }
+
+    /* Links */
+    .link-pill {
+      display: inline-block;
+      color: var(--white-soft);
+      font-size: 13.5px; font-weight: 600;
+      background: rgba(255,255,255,0.08);
+      padding: 6px 16px;
+      border-radius: 40px;
+      cursor: pointer;
+      margin-top: 14px;
+      transition: background var(--transition), color var(--transition);
+    }
+    .link-pill:hover { background: rgba(255,255,255,0.2); color: var(--white); }
+
+    .toggle-link {
+      display: inline-block;
+      color: var(--white-soft);
+      font-size: 14px; font-weight: 600;
+      cursor: pointer;
+      margin-top: 16px;
+      transition: color var(--transition);
+    }
+    .toggle-link:hover { color: var(--white); text-decoration: underline; }
+
+    /* ── Iframe container ── */
+    #iframeContainer {
+      position: fixed; inset: 0;
+      display: none; z-index: 99;
+      background: radial-gradient(ellipse at 20% 30%, var(--bg-light), var(--bg-mid) 50%, var(--bg-deep));
+      opacity: 0;
+      transition: opacity 0.45s ease;
+    }
+    #iframeContainer.show { display: block; opacity: 1; }
+    #iframeContainer iframe {
+      width: 100%; height: 100%; border: none; display: block;
+      overflow-y: auto; overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── Offline page ── */
+    #offlinePage {
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse at 20% 30%, var(--bg-light), var(--bg-mid) 50%, var(--bg-deep));
+      color: var(--white);
+      display: none;
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 0 28px;
+      z-index: 999999;
+    }
+    #offlinePage.show { display: flex; }
+    #offlinePage img { width: 90px; margin-bottom: 22px; filter: drop-shadow(0 8px 18px rgba(0,0,0,0.4)); }
+    #offlinePage h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 10px; }
+    #offlinePage p  { font-size: 0.95rem; opacity: 0.88; line-height: 1.55; margin-bottom: 26px; }
+    #reconnectBtn {
+      padding: 13px 30px;
+      border-radius: 40px;
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      border: 0.5px solid rgba(255,255,255,0.35);
+      color: var(--white);
+      font-size: 15px; font-weight: 700;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: background var(--transition), transform var(--transition);
+    }
+    #reconnectBtn:hover { background: rgba(255,255,255,0.22); transform: translateY(-1px); }
+
+    /* ── Dialog base ── */
+    .dialog-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100000;
+      opacity: 0; visibility: hidden;
+      transition: opacity 0.22s ease, visibility 0.22s ease;
+    }
+    .dialog-overlay.show { opacity: 1; visibility: visible; }
+
+    .dialog-card {
+      width: 85%; max-width: 330px;
+      border-radius: 44px;
+      padding: 28px 22px;
+      text-align: center;
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 30px 50px rgba(0,0,0,0.5);
+      transform: scale(0.9);
+      transition: transform 0.25s cubic-bezier(0.2,0.9,0.4,1.1);
+    }
+    .dialog-overlay.show .dialog-card { transform: scale(1); }
+
+    /* Status dialog */
+    #statusDialogOverlay .dialog-card {
+      background: linear-gradient(135deg, #3843AC, #2C3486);
+      border-color: rgba(255,255,255,0.3);
+    }
+    .status-icon { width: 58px; height: 58px; margin: 0 auto 12px; display: block; object-fit: contain; animation: bounceIn 0.4s ease; }
+    @keyframes bounceIn {
+      0%   { transform: scale(0.4); opacity: 0; }
+      65%  { transform: scale(1.12); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .status-msg {
+      color: var(--white); font-weight: 600;
+      font-size: 16px; line-height: 1.55;
+      margin-bottom: 22px;
+    }
+    .dialog-ok-btn {
+      background: rgba(255,255,255,0.9);
+      border: none; border-radius: 40px;
+      padding: 12px 24px;
+      font-size: 17px; font-weight: 700;
+      color: #111; cursor: pointer;
+      width: 100%; font-family: var(--font);
+      transition: background var(--transition), transform var(--transition);
+    }
+    .dialog-ok-btn:hover { background: var(--white); transform: scale(0.98); }
+
+    /* Forgot dialog */
+    #forgotDialogOverlay .dialog-card {
+      background: rgba(8,18,36,0.95);
+      border-color: rgba(255,255,255,0.25);
+    }
+    #forgotDialogOverlay h3  { font-size: 1.4rem; font-weight: 700; color: var(--white); margin-bottom: 12px; }
+    #forgotDialogOverlay p   { font-size: 0.9rem; color: var(--white-soft); line-height: 1.6; margin-bottom: 22px; }
+    .dialog-btn-stack { display: flex; flex-direction: column; gap: 10px; }
+    .btn-teal  { background: rgba(37,150,190,0.6); border: 0.5px solid rgba(255,255,255,0.4); }
+    .btn-teal:hover { background: rgba(37,150,190,0.82); }
+
+    /* Locked dialog */
+    #lockedDialogOverlay .dialog-card {
+      background: var(--red-bg);
+      border-color: var(--red);
+      max-width: 340px;
+    }
+    .locked-icon { width: 80px; height: 80px; margin: 0 auto 14px; display: block; animation: bounceIn 0.5s ease; filter: drop-shadow(0 6px 16px rgba(0,0,0,0.45)); }
+    .locked-title { font-size: 1.7rem; font-weight: 500; color: #ff000a; margin-bottom: 10px; letter-spacing: -0.4px; }
+    .locked-msg   { color: rgba(255,255,245,0.92); font-size: 14px; font-weight: 500; margin-bottom: 24px; line-height: 1.55; padding: 0 4px; }
+    .btn-danger   { background: rgba(220,90,50,0.85); border: 1px solid rgba(255,255,200,0.5); margin-bottom: 10px; }
+    .btn-danger:hover { background: #d9534f; }
+    .hidden { display: none !important; }
+
+    @media (max-width: 380px) {
+      .card { padding: 26px 18px 22px; }
+      .card h2 { font-size: 1.65rem; }
+      .logo-wrap img { width: 78px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Initial loading -->
+<div class="overlay" id="initialLoadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-label">Verifying...</div>
+</div>
+
+<!-- Main login/signup -->
+<div id="mainContent">
+  <div class="logo-wrap">
+    <img src="imgs/ftk.png" alt="ZIN✗ES">
+  </div>
+
+  <!-- Login card -->
+  <div class="card" id="signInBox">
+    <h2>Login</h2>
+    <input type="text"     id="signInUsername" placeholder="Username">
+    <input type="password" id="signInPassword" placeholder="Password">
+    <button class="btn btn-blue" onclick="signIn()">Login</button>
+    <div><span class="link-pill" id="forgotPasswordLink">Forgot password ?</span></div>
+    <span class="toggle-link" onclick="toggleForm('signUp')">Create new account</span>
+  </div>
+
+  <!-- Sign-up card -->
+  <div class="card" id="signUpBox" style="display:none;">
+    <h2>Sign Up</h2>
+    <input type="text"     id="signUpUsername"        placeholder="Enter your real name">
+    <input type="password" id="signUpPassword"        placeholder="Create Password">
+    <input type="password" id="signUpConfirmPassword" placeholder="Confirm Password">
+    <button class="btn btn-green" onclick="signUp()">Sign Up</button>
+    <span class="toggle-link" onclick="toggleForm('signIn')">Have an account ? Login</span>
+  </div>
+</div>
+
+<!-- Process overlay -->
+<div class="overlay" id="processOverlay">
+  <div class="spinner"></div>
+  <div class="loading-label">Verifying your access...</div>
+</div>
+
+<!-- Iframe -->
+<div id="iframeContainer">
+  <iframe id="targetIframe"></iframe>
+</div>
+
+<!-- Offline page -->
+<div id="offlinePage">
+  <img src="https://i.postimg.cc/GtyWN6fj/network-error.png" alt="No Internet">
+  <h1>Check Your Connection!</h1>
+  <p><strong>This site requires a stable internet connection. Please check and try again.</strong></p>
+  <button id="reconnectBtn">Reconnect</button>
+</div>
+
+<!-- Forgot password dialog -->
+<div class="dialog-overlay" id="forgotDialogOverlay">
+  <div class="dialog-card">
+    <h3>Forgot password ?</h3>
+    <p>If you forgot your password or are facing a login issue, contact the admin to recover your account.</p>
+    <div class="dialog-btn-stack">
+      <button class="btn btn-teal" id="adminContactBtn">📱 Admin (Telegram)</button>
+      <button class="btn btn-ghost" id="closeForgotBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Locked account dialog -->
+<div class="dialog-overlay" id="lockedDialogOverlay">
+  <div class="dialog-card">
+    <img src="https://i.postimg.cc/9FvFsBDJ/3d-lock.png" alt="Account Locked" class="locked-icon">
+    <div class="locked-title">Account Locked</div>
+    <div class="locked-msg">এই অ্যাকাউন্টটি প্রশাসক দ্বারা লক করা হয়েছে। অনুগ্রহ করে অ্যাডমিনের সাথে যোগাযোগ করুন।</div>
+    <button class="btn btn-danger" id="lockedAdminContactBtn">📞 Contact Admin (Telegram)</button>
+    <button class="btn btn-ghost" id="lockedCloseBtn">Close</button>
+  </div>
+</div>
+
+<!-- Status dialog -->
+<div class="dialog-overlay" id="statusDialogOverlay">
+  <div class="dialog-card">
+    <img id="statusIcon" class="status-icon" src="imgs/other.png" alt="status">
+    <div class="status-msg" id="statusMsg"></div>
+    <button class="dialog-ok-btn" id="statusOkBtn">OK</button>
+  </div>
+</div>
+
+<script>
+  const API = 'api.php';
+
+  // ── PC detection ──
+  function isPC() {
+    const ua = navigator.userAgent.toLowerCase();
+    const pcPatterns = ["windows","macintosh","linux x86","x11","bluestacks","nox","memu","genymotion","sdk build","emulator"];
+    return pcPatterns.some(p => ua.includes(p)) || window.innerWidth > 1024;
+  }
+  const IS_PC = isPC();
+
+  // ── Element refs ──
+  const $ = id => document.getElementById(id);
+  const el = {
+    loadingOverlay:   $('initialLoadingOverlay'),
+    mainContent:      $('mainContent'),
+    signInBox:        $('signInBox'),
+    signUpBox:        $('signUpBox'),
+    processOverlay:   $('processOverlay'),
+    iframeContainer:  $('iframeContainer'),
+    iframe:           $('targetIframe'),
+    offlinePage:      $('offlinePage'),
+    reconnectBtn:     $('reconnectBtn'),
+    forgotOverlay:    $('forgotDialogOverlay'),
+    adminContactBtn:  $('adminContactBtn'),
+    closeForgotBtn:   $('closeForgotBtn'),
+    forgotLink:       $('forgotPasswordLink'),
+    lockedOverlay:    $('lockedDialogOverlay'),
+    lockedAdminBtn:   $('lockedAdminContactBtn'),
+    lockedCloseBtn:   $('lockedCloseBtn'),
+    statusOverlay:    $('statusDialogOverlay'),
+    statusIcon:       $('statusIcon'),
+    statusMsg:        $('statusMsg'),
+    statusOkBtn:      $('statusOkBtn'),
+  };
+
+  const ICONS = { success: 'imgs/tick.png', error: 'imgs/cross.png', default: 'imgs/other.png' };
+
+  let currentUserId      = null;
+  let fromLoginLock      = false;
+  let pollInterval       = null;
+  let connCheckInterval  = null;
+  let isReconnecting     = false;
+
+  // ── API helper ──
+  async function api(action, data = {}) {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, ...data })
+    });
+    return res.json();
+  }
+
+  // ── Status dialog ──
+  function showStatus(message, type = 'default', onOk = null) {
+    if (el.lockedOverlay.classList.contains('show')) hideLockedDialog(false);
+    const iconMap = { success: ICONS.success, '✅': ICONS.success, error: ICONS.error, '❌': ICONS.error };
+    el.statusIcon.src = iconMap[type] || ICONS.default;
+    el.statusMsg.textContent = message;
+    el.statusOverlay.classList.add('show');
+    el.statusOkBtn.onclick = () => {
+      el.statusOverlay.classList.remove('show');
+      if (typeof onOk === 'function') onOk();
+    };
+  }
+
+  // ── Form toggle ──
+  function toggleForm(form) {
+    el.signInBox.style.display = form === 'signUp' ? 'none' : 'block';
+    el.signUpBox.style.display = form === 'signUp' ? 'block' : 'none';
+  }
+
+  // ── Forgot password dialog ──
+  function showForgotDialog() {
+    el.forgotOverlay.classList.add('show');
+    document.body.style.pointerEvents = 'none';
+    el.forgotOverlay.style.pointerEvents = 'auto';
+  }
+  function hideForgotDialog() {
+    el.forgotOverlay.classList.remove('show');
+    document.body.style.pointerEvents = 'auto';
+  }
+
+  // ── Locked dialog ──
+  function showLockedDialog(fromLogin = false) {
+    el.statusOverlay.classList.remove('show');
+    el.forgotOverlay.classList.remove('show');
+    fromLoginLock = fromLogin;
+    el.lockedCloseBtn.classList.toggle('hidden', !fromLogin);
+    el.lockedOverlay.classList.add('show');
+    document.body.style.pointerEvents = 'none';
+    el.lockedOverlay.style.pointerEvents = 'auto';
+  }
+  function hideLockedDialog(resetToLogin = true) {
+    el.lockedOverlay.classList.remove('show');
+    document.body.style.pointerEvents = 'auto';
+    if (resetToLogin && fromLoginLock) {
+      el.mainContent.classList.add('visible');
+      el.signInBox.style.display = 'block';
+      el.signUpBox.style.display = 'none';
+      el.loadingOverlay.classList.add('hide');
+      el.iframeContainer.classList.remove('show');
+      currentUserId = null;
+      localStorage.removeItem('userLoggedIn');
+      localStorage.removeItem('userLoggedInId');
+    }
+    fromLoginLock = false;
+  }
+
+  // ── Sign Up ──
+  async function signUp() {
+    const username = $('signUpUsername').value.trim();
+    const password = $('signUpPassword').value;
+    const confirm  = $('signUpConfirmPassword').value;
+    if (!username || !password || !confirm) { showStatus('সব ঘর পূরণ করুন!'); return; }
+    if (password !== confirm)               { showStatus('পাসওয়ার্ড মিলছে না!', 'error'); return; }
+    if (password.length < 4)               { showStatus('পাসওয়ার্ড কমপক্ষে ৪ অক্ষরের হতে হবে!'); return; }
+    try {
+      const data = await api('signup', { username, password });
+      if (data.success) {
+        showStatus('✔️ সাইন আপ সফল! এখন লগইন করুন।', 'success', () => {
+          toggleForm('signIn');
+          $('signInUsername').value = username;
+          $('signInPassword').value = '';
+        });
+      } else {
+        showStatus(data.message || 'এই ইউজারনেমটি ইতিমধ্যে নেওয়া আছে!');
+      }
+    } catch { showStatus('কানেকশন এরর!'); }
+  }
+
+  // ── Sign In ──
+  async function signIn() {
+    const username = $('signInUsername').value.trim();
+    const password = $('signInPassword').value;
+    if (!username || !password) { showStatus('Enter Username Or Password!'); return; }
+    try {
+      const data = await api('signin', { username, password });
+      if (!data.success) {
+        if (data.blocked) { currentUserId = data.userId; showLockedDialog(true); }
+        else showStatus(data.message || 'ভুল পাসওয়ার্ড!', 'error');
+        return;
+      }
+      showStatus('✔️ সাইন ইন সফল!', 'success', () => {
+        currentUserId = data.userId;
+        localStorage.setItem('userLoggedIn',   'true');
+        localStorage.setItem('userLoggedInId', data.userId);
+        localStorage.setItem('username',       username);
+        el.mainContent.classList.remove('visible');
+        el.loadingOverlay.style.display = 'flex';
+        el.loadingOverlay.classList.remove('hide');
+        startPoll(data.userId);
+        setTimeout(() => { el.loadingOverlay.classList.add('hide'); openIframe('home.php'); }, 1500);
+      });
+    } catch { showStatus('কানেকশন এরর!'); }
+  }
+
+  // ── Status poll ──
+  function startPoll(userId) {
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(async () => {
+      try {
+        const data = await api('check_status', { userId });
+        if (!data.success) return;
+        if (data.blocked && !el.lockedOverlay.classList.contains('show')) {
+          clearInterval(pollInterval);
+          el.statusOverlay.classList.remove('show');
+          el.forgotOverlay.classList.remove('show');
+          el.loadingOverlay.classList.add('hide');
+          el.mainContent.classList.remove('visible');
+          el.iframeContainer.classList.remove('show');
+          showLockedDialog(false);
+        }
+        if (data.loggedOut) {
+          clearInterval(pollInterval);
+          localStorage.removeItem('userLoggedIn');
+          localStorage.removeItem('userLoggedInId');
+          location.reload();
+        }
+      } catch { /* ignore network blips */ }
+    }, 5000);
+  }
+
+  // ── Open iframe ──
+  function openIframe(url) {
+    if (el.lockedOverlay.classList.contains('show')) return;
+    el.signInBox.style.display = 'none';
+    el.signUpBox.style.display = 'none';
+    el.mainContent.classList.remove('visible');
+    el.iframe.src = url;
+    setTimeout(() => { el.iframeContainer.classList.add('show'); }, 100);
+  }
+
+  // ── Connection check ──
+  async function checkConnection(timeout = 1000) {
+    if (!navigator.onLine) return false;
+    try {
+      const ctrl = new AbortController();
+      const id = setTimeout(() => ctrl.abort(), timeout);
+      await fetch('api.php?ping=1', { method: 'HEAD', mode: 'no-cors', signal: ctrl.signal });
+      clearTimeout(id);
+      return true;
+    } catch { return false; }
+  }
+
+  function showOffline() {
+    el.offlinePage.classList.add('show');
+    el.loadingOverlay.classList.add('hide');
+    el.mainContent.classList.remove('visible');
+    el.iframeContainer.classList.remove('show');
+  }
+  function hideOffline() { el.offlinePage.classList.remove('show'); }
+
+  function startConnCheck() {
+    if (connCheckInterval) clearInterval(connCheckInterval);
+    connCheckInterval = setInterval(async () => {
+      if (!el.offlinePage.classList.contains('show')) {
+        if (!await checkConnection()) showOffline();
+      }
+    }, 2500);
+  }
+
+  async function handleReconnect() {
+    if (isReconnecting) return;
+    if (IS_PC) {
+      el.loadingOverlay.innerHTML = '<div style="text-align:center;color:#ff8a8a;padding:20px"><h2>⚠️ PC Access Blocked</h2><p style="margin-top:10px">This website can only be opened on a real mobile device.</p></div>';
+      el.loadingOverlay.style.display = 'flex';
+      el.loadingOverlay.classList.remove('hide');
+      el.offlinePage.classList.remove('show');
+      return;
+    }
+    isReconnecting = true;
+    el.reconnectBtn.textContent = 'Connecting...';
+    el.reconnectBtn.disabled = true;
+
+    const ok = await checkConnection(3000);
+    if (ok) {
+      hideOffline();
+      const loggedIn = localStorage.getItem('userLoggedIn') === 'true';
+      const storedId = localStorage.getItem('userLoggedInId');
+      if (loggedIn && storedId) {
+        try {
+          const data = await api('check_status', { userId: storedId });
+          if (data.success && !data.blocked) {
+            currentUserId = storedId;
+            startPoll(storedId);
+            el.loadingOverlay.style.display = 'flex';
+            el.loadingOverlay.classList.remove('hide');
+            setTimeout(() => { el.loadingOverlay.classList.add('hide'); openIframe('home.php'); }, 1000);
+          } else {
+            localStorage.removeItem('userLoggedIn');
+            localStorage.removeItem('userLoggedInId');
+            el.mainContent.classList.add('visible');
+            el.signInBox.style.display = 'block';
+          }
+        } catch { showStatus('কানেকশন পুনরুদ্ধার হচ্ছে... আবার চেষ্টা করুন'); }
+      } else {
+        el.mainContent.classList.add('visible');
+        el.signInBox.style.display = 'block';
+      }
+      startConnCheck();
+    }
+
+    setTimeout(() => {
+      el.reconnectBtn.textContent = 'Reconnect';
+      el.reconnectBtn.disabled = false;
+      isReconnecting = false;
+    }, 2000);
+  }
+
+  // ── App init ──
+  async function initApp() {
+    startConnCheck();
+
+    if (IS_PC) {
+      el.loadingOverlay.innerHTML = '<div style="text-align:center;color:#ff8a8a;padding:20px"><h2>⚠️ PC Access Blocked</h2><p style="margin-top:10px">This website can only be opened on a real mobile device.</p></div>';
+      return;
+    }
+
+    el.loadingOverlay.style.display = 'flex';
+    const online = await checkConnection();
+    if (!online) { showOffline(); return; }
+
+    if (localStorage.getItem('userLoggedIn') === 'true') {
+      const storedId = localStorage.getItem('userLoggedInId');
+      if (!storedId) {
+        localStorage.removeItem('userLoggedIn');
+        setTimeout(() => { el.loadingOverlay.classList.add('hide'); el.mainContent.classList.add('visible'); }, 1000);
+        return;
+      }
+      try {
+        const data = await api('check_status', { userId: storedId });
+        if (data.success && data.blocked) {
+          currentUserId = storedId;
+          setTimeout(() => { el.loadingOverlay.style.display = 'none'; showLockedDialog(false); }, 500);
+          return;
+        }
+        if (data.success) {
+          currentUserId = storedId;
+          startPoll(storedId);
+          setTimeout(() => { el.loadingOverlay.classList.add('hide'); openIframe('home.php'); }, 1000);
+        } else {
+          localStorage.removeItem('userLoggedIn');
+          localStorage.removeItem('userLoggedInId');
+          setTimeout(() => { el.loadingOverlay.classList.add('hide'); el.mainContent.classList.add('visible'); }, 1000);
+        }
+      } catch {
+        setTimeout(() => { el.loadingOverlay.classList.add('hide'); el.mainContent.classList.add('visible'); }, 1000);
+      }
+    } else {
+      setTimeout(() => { el.loadingOverlay.classList.add('hide'); el.mainContent.classList.add('visible'); }, 1000);
+    }
+  }
+
+  // ── Event listeners ──
+  el.forgotLink.addEventListener('click', e => { e.preventDefault(); showForgotDialog(); });
+  el.adminContactBtn.addEventListener('click', () => { window.open('https://t.me/zinex1971', '_blank'); hideForgotDialog(); });
+  el.closeForgotBtn.addEventListener('click', hideForgotDialog);
+
+  el.lockedAdminBtn.addEventListener('click', () => window.open('https://t.me/zinex1971', '_blank'));
+  el.lockedCloseBtn.addEventListener('click', () => {
+    hideLockedDialog(true);
+    if (pollInterval) clearInterval(pollInterval);
+    localStorage.removeItem('userLoggedIn');
+    localStorage.removeItem('userLoggedInId');
+    currentUserId = null;
+    el.mainContent.classList.add('visible');
+    el.signInBox.style.display = 'block';
+    el.signUpBox.style.display = 'none';
+    el.loadingOverlay.classList.add('hide');
+    el.iframeContainer.classList.remove('show');
+  });
+
+  el.reconnectBtn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); handleReconnect(); });
+  window.addEventListener('offline', showOffline);
+  window.addEventListener('online', async () => {
+    if (IS_PC) return;
+    if (el.offlinePage.classList.contains('show')) {
+      if (await checkConnection()) { hideOffline(); startConnCheck(); }
+    }
+  });
+  window.addEventListener('beforeunload', () => {
+    if (connCheckInterval) clearInterval(connCheckInterval);
+    if (pollInterval)      clearInterval(pollInterval);
+  });
+
+  document.addEventListener('DOMContentLoaded', initApp);
+</script>
+</body>
+</html>
